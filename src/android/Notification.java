@@ -36,6 +36,7 @@ import android.content.res.Resources;
 import android.media.Ringtone;
 import android.media.RingtoneManager;
 import android.net.Uri;
+import android.os.Bundle;
 import android.widget.EditText;
 import android.widget.TextView;
 
@@ -52,11 +53,13 @@ public class Notification extends CordovaPlugin {
 
     private static final String LOG_TAG = "Notification";
     
+    private CallbackContext callbackContext;
+
     public int confirmResult = -1;
     public ProgressDialog spinnerDialog = null;
     public ProgressDialog progressDialog = null;
 
-    /**
+	    /**
      * Constructor.
      */
     public Notification() {
@@ -79,19 +82,21 @@ public class Notification extends CordovaPlugin {
     	 */
     	if(this.cordova.getActivity().isFinishing()) return true;
     	
+        this.callbackContext = callbackContext;
+
         if (action.equals("beep")) {
             this.beep(args.getLong(0));
         }
         else if (action.equals("alert")) {
-            this.alert(args.getString(0), args.getString(1), args.getString(2), callbackContext);
+            this.alert(args.getString(0), args.getString(1), args.getString(2));
             return true;
         }
         else if (action.equals("confirm")) {
-            this.confirm(args.getString(0), args.getString(1), args.getJSONArray(2), callbackContext);
+            this.confirm(args.getString(0), args.getString(1), args.getJSONArray(2));
             return true;
         }
         else if (action.equals("prompt")) {
-            this.prompt(args.getString(0), args.getString(1), args.getJSONArray(2), args.getString(3), callbackContext);
+            this.prompt(args.getString(0), args.getString(1), args.getJSONArray(2), args.getString(3));
             return true;
         }
         else if (action.equals("activityStart")) {
@@ -114,7 +119,7 @@ public class Notification extends CordovaPlugin {
         }
 
         // Only alert and confirm are async.
-        callbackContext.success();
+        this.callbackContext.success();
         return true;
     }
 
@@ -157,9 +162,8 @@ public class Notification extends CordovaPlugin {
      * @param message           The message the alert should display
      * @param title             The title of the alert
      * @param buttonLabel       The label of the button
-     * @param callbackContext   The callback context
      */
-    public synchronized void alert(final String message, final String title, final String buttonLabel, final CallbackContext callbackContext) {
+    public synchronized void alert(final String message, final String title, final String buttonLabel) {
     	final CordovaInterface cordova = this.cordova;
 
         Runnable runnable = new Runnable() {
@@ -198,9 +202,8 @@ public class Notification extends CordovaPlugin {
      * @param message           The message the dialog should display
      * @param title             The title of the dialog
      * @param buttonLabels      A comma separated list of button labels (Up to 3 buttons)
-     * @param callbackContext   The callback context.
      */
-    public synchronized void confirm(final String message, final String title, final JSONArray buttonLabels, final CallbackContext callbackContext) {
+    public synchronized void confirm(final String message, final String title, final JSONArray buttonLabels) {
     	final CordovaInterface cordova = this.cordova;
 
         Runnable runnable = new Runnable() {
@@ -278,9 +281,8 @@ public class Notification extends CordovaPlugin {
      * @param message           The message the dialog should display
      * @param title             The title of the dialog
      * @param buttonLabels      A comma separated list of button labels (Up to 3 buttons)
-     * @param callbackContext   The callback context.
      */
-    public synchronized void prompt(final String message, final String title, final JSONArray buttonLabels, final String defaultText, final CallbackContext callbackContext) {
+    public synchronized void prompt(final String message, final String title, final JSONArray buttonLabels, final String defaultText) {
   	
         final CordovaInterface cordova = this.cordova;
        
@@ -509,5 +511,16 @@ public class Notification extends CordovaPlugin {
             TextView messageview = (TextView)dialog.findViewById(android.R.id.message);
             messageview.setTextDirection(android.view.View.TEXT_DIRECTION_LOCALE);
         }
+    }
+
+    @Override
+    public Bundle onSaveInstanceState() {
+        Bundle state = new Bundle();
+        return state;
+    }
+
+    @Override
+    public void onRestoreStateForActivityResult(Bundle state, CallbackContext callbackContext) {
+        this.callbackContext = callbackContext;
     }
 }
